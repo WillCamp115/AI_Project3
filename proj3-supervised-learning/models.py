@@ -70,6 +70,11 @@ class RegressionModel(object):
     def __init__(self):
         # Initialize your model parameters here
         "*** YOUR CODE HERE ***"
+        hidden_size = 50
+        self.w1 = nn.Parameter(1, hidden_size)
+        self.b1 = nn.Parameter(1, hidden_size)
+        self.w2 = nn.Parameter(hidden_size, 1)
+        self.b2 = nn.Parameter(1, 1)
 
     def run(self, x):
         """
@@ -81,6 +86,12 @@ class RegressionModel(object):
             A node with shape (batch_size x 1) containing predicted y-values
         """
         "*** YOUR CODE HERE ***"
+        x = nn.Linear(x, self.w1)
+        x = nn.AddBias(x, self.b1)
+        x = nn.ReLU(x)
+        x = nn.Linear(x, self.w2)
+        x = nn.AddBias(x, self.b2)
+        return x
 
     def get_loss(self, x, y):
         """
@@ -94,11 +105,28 @@ class RegressionModel(object):
         """
         "*** YOUR CODE HERE ***"
 
+        return nn.SquareLoss(self.run(x), y)
+
     def train(self, dataset):
         """
         Trains the model.
         """
         "*** YOUR CODE HERE ***"
+        lr = 0.01
+        while True:
+            total_loss = 0
+            for x, y in dataset.iterate_once(20):
+                loss = self.get_loss(x, y)
+                total_loss += nn.as_scalar(loss)
+
+                grad_wrt_w1, grad_wrt_b1, grad_wrt_w2, grad_wrt_b2 = nn.gradients(loss, [self.w1, self.b1, self.w2, self.b2])
+                self.w1.update(grad_wrt_w1, -lr)
+                self.b1.update(grad_wrt_b1, -lr)
+                self.w2.update(grad_wrt_w2, -lr)
+                self.b2.update(grad_wrt_b2, -lr)
+
+            if total_loss <= 0.02:
+                break
 
 class DigitClassificationModel(object):
     """
